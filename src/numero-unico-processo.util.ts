@@ -98,7 +98,7 @@ class NumeroUnicoProcesso {
    * @return {number} componentes.origem - Origem da numeração única do processo (OOOO)
    */
   static extrairComponentes(numeroDeProcesso: string): IComponentes {
-    const matches = NumeroUnicoProcesso.REGEX.exec(numeroDeProcesso);
+    const matches = this.REGEX.exec(numeroDeProcesso);
     const groups: Partial<IComponentes> | undefined = matches?.groups;
 
     if (matches === null || groups === undefined) {

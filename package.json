@@ -11,7 +11,7 @@
   "scripts": {
     "commit-lint": "commitlint --edit $1",
     "coverage": "ts-node test --coverage --silent",
-    "doctoc": "doctoc ./README.md --github",
+    "toc:update": "doctoc ./README.md --github",
     "prettier": "prettier --config .prettierrc.cjs '**/*.{js,ts,json,md}' --write",
     "pre-commit": "lint-staged",
     "lint": "eslint ./src ./test --ext .cjs,.js,.ts",
