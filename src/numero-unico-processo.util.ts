@@ -8,7 +8,18 @@
  *
  * Estrutura: NNNNNNN-DD.AAAA.J.TR.OOOO
  */
-export class NumeroUnicoProcesso {
+
+interface IComponentes {
+  numero: number | string;
+  ano: number | string;
+  digitoVerificador?: number | string;
+  orgao?: number | string;
+  tr?: number | string;
+  jtr: number | string;
+  origem: number | string;
+}
+
+class NumeroUnicoProcesso {
   /**
    * Calcula o digito verificador da numeração única do processo
    * @param {(number|string)} numero - Número da numeração única do processo (NNNNNNN)
@@ -17,13 +28,13 @@ export class NumeroUnicoProcesso {
    * @param {(number|string)} jtr - Identificação do órgão da justiça (JTR)
    * @return {number} Retorna o digito verificador da numeração única do processo (Algoritmo Módulo 97 Base 10 (Norma ISO 7064))
    */
-  static calcularDigitoVerificador(
-    numero: number | string,
-    ano: number | string,
-    origem: number | string,
-    jtr: number | string
-  ): number {
-    const valor = this.calcular(numero, ano, origem, jtr);
+  static calcularDigitoVerificador({
+    numero,
+    ano,
+    origem,
+    jtr
+  }: IComponentes): number {
+    const valor = this.calcular({ numero, ano, origem, jtr });
     return 98 - (+valor % 97);
   }
 
@@ -36,14 +47,14 @@ export class NumeroUnicoProcesso {
    * @param {(number|string)} digitoVerificador - Digito Verificador da numeração única do processo (DD)
    * @return {boolean} Retorna um boleano indicando se o digito verificador está correto ou não.
    */
-  static validarDigitoVerificador(
-    numero: number | string,
-    ano: number | string,
-    origem: number | string,
-    jtr: number | string,
-    digitoVerificador: number | string
-  ): boolean {
-    const valor = this.calcular(numero, ano, origem, jtr, digitoVerificador);
+  static validarDigitoVerificador({
+    numero,
+    ano,
+    origem,
+    jtr,
+    digitoVerificador
+  }: IComponentes): boolean {
+    const valor = this.calcular({ numero, ano, origem, jtr, digitoVerificador });
     return +valor % 97 === 1;
   }
 
@@ -56,13 +67,13 @@ export class NumeroUnicoProcesso {
    * @param {(number|string)} digitoVerificador - Digito Verificador da numeração única do processo (DD)
    * @return {string} Retorna a concatenação do valor calculado + origem + digitoVerificador
    */
-  private static calcular(
-    numero: number | string,
-    ano: number | string,
-    origem: number | string,
-    jtr: number | string,
-    digitoVerificador: number | string = 0
-  ): string {
+  private static calcular({
+    numero,
+    ano,
+    origem,
+    jtr,
+    digitoVerificador = 0
+  }: IComponentes): string {
     numero = this.formatarNumero(numero);
     ano = this.formatarAno(ano);
     origem = this.formatarOrigem(origem);
@@ -77,6 +88,55 @@ export class NumeroUnicoProcesso {
 
     return valor2;
   }
+
+  /**
+	 * Extrai as componentes da string que representa o número de processo
+	 * @param {string} numeroDeProcesso - Número de processo no formato NNNNNNN-DD.AAAA.J.TR.OOOO
+	 * @return {Object.<string, number>} componentes - O objeto contendo as componentes do número de processo
+ 	 * @return {number} componentes.numero - Número da numeração única do processo (NNNNNNN)
+	 * @return {number} componentes.digitoVerificador - Digito Verificador da numeração única do processo (DD)
+	 * @return {number} componentes.ano - Ano da numeração única do processo (AAAA)
+	 * @return {number} componentes.jtr - Identificação do órgão da justiça (JTR)
+	 * @return {number} componentes.origem - Origem da numeração única do processo (OOOO)
+	 */
+	static extrairComponentes(numeroDeProcesso: string): IComponentes {
+    const regex = /^(?<numero>\d{7})-(?<digitoVerificador>\d{2}).(?<ano>\d{4}).(?<orgao>\d{1}).(?<tr>\d{2}).(?<origem>\d{4})$/;
+		const matches = regex.exec(numeroDeProcesso);
+    const groups: Partial<IComponentes> | undefined = matches?.groups;
+
+    if (matches === null || groups === undefined) {
+      throw new TypeError(`"${numeroDeProcesso}" não é um número de processo válido`);
+    }
+
+    const { ano, orgao, tr } = groups;
+
+		if (ano && parseInt(ano as string) > (new Date()).getFullYear()) {
+			throw new TypeError(`"${ano}" não é um ano válido`);
+		}
+
+		groups['jtr'] = `${orgao}${tr}`;
+		delete groups.orgao;
+		delete groups.tr;
+
+    let componentes: IComponentes = {
+      numero: 0,
+      ano: 0,
+      jtr: 0,
+      origem: 0,
+    };
+
+    for (const [key, value] of Object.entries(groups)) {
+      try {
+        componentes[key as keyof IComponentes] = Number(value)
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message)
+        }
+      }
+    }
+
+		return componentes;
+	}
 
   /**
    * Formata o Número
@@ -119,3 +179,6 @@ export class NumeroUnicoProcesso {
     digitoVerificador: number | string
   ): string => `${digitoVerificador}`.padStart(2, '0');
 }
+
+export default NumeroUnicoProcesso;
+export { IComponentes };
